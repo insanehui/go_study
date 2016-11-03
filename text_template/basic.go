@@ -7,6 +7,7 @@ import (
 
 func main() {
 
+	// 支持中文吗？
 	data := map[string]interface{}{
 		"Name":    "guanghui",
 		"Age":     30,
