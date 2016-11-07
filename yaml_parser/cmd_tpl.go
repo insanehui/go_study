@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	U "utils"
 	J "utils/json"
 	Y "utils/yaml"
 
@@ -33,8 +34,8 @@ var (
 )
 
 type Para struct {
-	Type string `yaml:"type" mapstructure:"type"`
-	Desc string `yaml:"description" mapstructure:"description"`
+	Type string `json:"type" mapstructure:"type"`
+	Desc string `json:"description" mapstructure:"description"`
 }
 
 func parse_parm(t interface{}) I {
@@ -82,7 +83,11 @@ func parse_parm(t interface{}) I {
 			}
 		}
 	case reflect.Slice:
-		log.Printf("hahaha!")
+		{
+			var paras []Para
+			U.Conv(t, &paras)
+			log.Printf("hahaha!: %+v", paras)
+		}
 
 	default:
 	}
