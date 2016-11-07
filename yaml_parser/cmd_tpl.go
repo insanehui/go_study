@@ -34,8 +34,38 @@ var (
 )
 
 type Para struct {
+	Name string `json:"name" mapstructure:"name"`
 	Type string `json:"type" mapstructure:"type"`
 	Desc string `json:"description" mapstructure:"description"`
+}
+
+func read_a_param(para *Para, r I) {
+	key := para.Name
+	fmt.Printf("please input [ %s (%s) ]: ", key, para.Type)
+	for true {
+		reader := bufio.NewReader(os.Stdin)
+		input, _ := reader.ReadString('\n')
+		input = strings.Replace(input, "\n", "", -1)
+		input = strings.Replace(input, "\r", "", -1)
+
+
+		switch para.Type {
+		case "int":
+			if validator.IsInt(input) {
+				r[key], _ = strconv.Atoi(input)
+				return
+			}
+		case "email":
+			if validator.IsEmail(input) {
+				r[key] = input
+				return
+			}
+		case "string":
+			r[key] = input
+			return
+		}
+		fmt.Printf("invalid! try again: ")
+	}
 }
 
 func parse_parm(t interface{}) I {
@@ -52,41 +82,17 @@ func parse_parm(t interface{}) I {
 			key := reflect.ValueOf(rkey.Interface()).String()
 			node := v.MapIndex(rkey).Interface()
 			var para Para
+			para.Name = key
 			ms.Decode(node, &para)
-			// log.Printf("%+v", para)
-			fmt.Printf("please input [ %s (%s) ]: ", key, para.Type)
-
-			// scan a line
-		try_loop:
-			for true {
-				reader := bufio.NewReader(os.Stdin)
-				input, _ := reader.ReadString('\n')
-				input = strings.Replace(input, "\n", "", -1)
-				input = strings.Replace(input, "\r", "", -1)
-
-				switch para.Type {
-				case "int":
-					if validator.IsInt(input) {
-						r[key], _ = strconv.Atoi(input)
-						break try_loop
-					}
-				case "email":
-					if validator.IsEmail(input) {
-						r[key] = input
-						break try_loop
-					}
-				case "string":
-					r[key] = input
-					break try_loop
-				}
-				fmt.Printf("invalid! try again: ")
-			}
+			read_a_param(&para, r)
 		}
 	case reflect.Slice:
 		{
 			var paras []Para
 			U.Conv(t, &paras)
-			log.Printf("hahaha!: %+v", paras)
+			for _, para := range paras {
+				read_a_param(&para, r)
+			}
 		}
 
 	default:
