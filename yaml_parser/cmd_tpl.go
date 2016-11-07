@@ -5,21 +5,32 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
+
+	J "utils/json"
+	Y "utils/yaml"
 
 	validator "github.com/asaskevich/govalidator"
 	ms "github.com/mitchellh/mapstructure"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	"gopkg.in/yaml.v2"
-)
 
-var (
-	filename = kingpin.Arg("filename", "the path of the yaml template file").Required().String()
+	"github.com/ghodss/yaml"
+	// "gopkg.in/yaml.v2"
 )
 
 type I map[interface{}]interface{}
+
+var (
+	filename = kingpin.Arg("filename", "the path of the yaml template file").Required().String()
+	op       = kingpin.Arg("op", "operation: p / g").String()
+	p        = kingpin.Flag("param", "path to param file").Short('p').String()
+
+	m = make(I)
+)
 
 type Para struct {
 	Type string `yaml:"type" mapstructure:"type"`
@@ -55,7 +66,7 @@ func parse_parm(t interface{}) I {
 				switch para.Type {
 				case "int":
 					if validator.IsInt(input) {
-						r[key] = input
+						r[key], _ = strconv.Atoi(input)
 						break try_loop
 					}
 				case "email":
@@ -70,40 +81,58 @@ func parse_parm(t interface{}) I {
 				fmt.Printf("invalid! try again: ")
 			}
 		}
+	case reflect.Slice:
+		log.Printf("hahaha!")
+
 	default:
 	}
 
 	return r
 }
 
+// 获取模板参数
+func get_params() {
+	log.Printf("params is: %+v", m["parameters"])
+	// j, err := yaml.YAMLToJSON(m["parameters"])
+	j := J.ToJson(m["parameters"])
+	log.Printf("params: %+v", j)
+}
+
 func main() {
 
 	kingpin.Parse()
-	m := make(I)
 
-	// read the parameters section
-	data, err := ioutil.ReadFile(*filename)
+	log.Printf("p is: %+v", *p)
 
-	// data1 =
+	// 解析命令行参数
+	if *p != "" { // 如果指定了参数文件
+		m["parameters"] = Y.FromFile(*p)
+	} else {
+		data, err := ioutil.ReadFile(*filename)
+		err = yaml.Unmarshal(data, &m)
 
-	err = yaml.Unmarshal(data, &m)
-	if err != nil {
-		// log.Printf("%+v", err)
+		if err != nil {
+			log.Printf("parse tpl err: %+v", err)
+		}
 	}
-	// log.Printf("%+v", m)
 
-	// ask user to input params
-	res := parse_parm(m["parameters"])
-	// log.Printf("%+v", res)
+	if *op == "" {
 
-	tpl, _ := template.ParseFiles(*filename)
-	tpl.Execute(os.Stdout, res)
+		res := parse_parm(m["parameters"])
+		// log.Printf("%+v", res)
 
-	// delete(m, "parameters")
-	// log.Printf("===============")
+		tpl, _ := template.ParseFiles(*filename)
+		tpl.Execute(os.Stdout, res)
 
-	// res, _ := yaml.Marshal(m)
-	// log.Printf("%s", res)
+		// delete(m, "parameters")
+		// log.Printf("===============")
 
-	// output the final yaml
+		// res, _ := yaml.Marshal(m)
+		// log.Printf("%s", res)
+
+		// output the final yaml
+	} else if *op == "p" {
+		get_params()
+	}
+
 }

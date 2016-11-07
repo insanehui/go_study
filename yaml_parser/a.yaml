@@ -29,4 +29,10 @@ outputs:
   sample_host_aggregate_id:
     value: {{.email}}
     message: asdfsaf
+    {{if gt .age 18}}
+    company: adult
+    {{else}}
+    school: kid
+    {{end}}
+
 
