@@ -5,13 +5,13 @@ import (
 
 	"testing"
 
-	// "gopkg.in/yaml.v2"
-	j "utils/json"
+	J "utils/json"
 
+	// "gopkg.in/yaml.v2"
 	"github.com/ghodss/yaml"
 )
 
-type Para struct {
+type MyType struct {
 	Name string `yaml:"name" mapstructure:"name"`
 	Type string `yaml:"type" mapstructure:"type"`
 	Desc string `yaml:"description" mapstructure:"description"`
@@ -30,16 +30,16 @@ b:
 `
 		yaml.Unmarshal([]byte(data), &m)
 		// s1, _ := json.Marshal(m) // 这里居然不能解析出来？
-		s1 := j.ToJson(m)
+		s1 := J.ToJson(m)
 		log.Printf("%+v", m)
 		log.Printf("%+v", string(s1))
 	}
 
 	{
-		var m []Para
+		var m []MyType
 		var data = `
 - name: name
-  type: string
+  type: string haha xx
   description: this's your name
 - name: age
   type: int
@@ -50,11 +50,14 @@ b:
 - name: email
   type: email
   description: Arbitrary key/value metadata
-		`
+`
 		err := yaml.Unmarshal([]byte(data), &m)
 		if err != nil {
 			log.Printf("err: %+v", err)
 		}
+		log.Printf("%+v", m)
+		j := J.ToJson(m)
+		log.Printf("%+v", j)
 
 	}
 
