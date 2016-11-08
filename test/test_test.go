@@ -5,6 +5,7 @@ import (
 	"log"
 	J "utils/json"
 	V "github.com/asaskevich/govalidator"
+	"path"
 )
 
 func init() {  
@@ -59,3 +60,11 @@ func TestValidator(t *testing.T){
 	}
 }
 
+func Test_nil(t *testing.T){
+	var s []string // slice的初始状态为nil
+	log.Println(s == nil)
+}
+
+func Test_path(t *testing.T){
+	log.Println(path.Join("a", "b", "c"))
+}
