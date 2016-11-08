@@ -6,3 +6,13 @@ type Err struct {
 	Code int    `json:"code"` // 返回码
 	Msg  string `json:"msg"`  // 错误消息
 }
+
+func (me *Err) FromStr(s string) {
+	me.Msg = s;
+	me.Code = -1; // 缺省设为-1吧
+}
+
+func (me *Err) FromError(e error) {
+	me.Msg = e.Error();
+	me.Code = -1; // 缺省设为-1吧
+}

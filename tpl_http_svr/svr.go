@@ -10,9 +10,14 @@ import (
 	H "utils/http"
 	// Mysql "utils/mysql"
 	// _ "github.com/go-sql-driver/mysql"
+	// V "github.com/asaskevich/govalidator"
 )
 
 func get_tpl_params(w http.ResponseWriter, r *http.Request) {
+
+	var q struct {
+		TplId string `valid:"length(0|64)"`// 模板id
+	}
 
 	// 定义返回结构
 	var ret struct {
@@ -22,10 +27,17 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		if p := recover(); p != nil {
-			log.Printf("%+v", p)
+			if e, ok := p.(error); ok { 
+				log.Printf("haha: %+v", e.Error())
+				ret.FromError(e)
+			}
 		}
 		H.WriteJson(w, ret)
 	}()
+
+	H.Checkout_(r, &q)
+	log.Printf("%+v", q)
+
 }
 
 func gen_blueprint(w http.ResponseWriter, r *http.Request) {
