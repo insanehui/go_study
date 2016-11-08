@@ -4,16 +4,28 @@ import (
 	// "encoding/json"
 	// "fmt"
 	// "log"
-	// "net/http"
+	"log"
+	"net/http"
 	// "strconv"
-	// H "utils/http"
-	// J "utils/json"
+	H "utils/http"
 	// Mysql "utils/mysql"
-
 	// _ "github.com/go-sql-driver/mysql"
 )
 
 func get_tpl_params(w http.ResponseWriter, r *http.Request) {
+
+	// 定义返回结构
+	var ret struct {
+		Err
+		Data string `json:"data"`
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			log.Printf("%+v", p)
+		}
+		H.WriteJson(w, ret)
+	}()
 }
 
 func gen_blueprint(w http.ResponseWriter, r *http.Request) {
