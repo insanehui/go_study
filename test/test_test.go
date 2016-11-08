@@ -1,43 +1,26 @@
 package main
 
 import (
+	"testing"
 	"log"
-	"reflect"
-
-	validator "github.com/asaskevich/govalidator"
+	J "utils/json"
 )
 
-func f(t interface{}) {
-
-	v := reflect.ValueOf(t)
-	switch v.Kind() {
-
-	case reflect.Map:
-		log.Printf("Map")
-		for _, rkey := range v.MapKeys() {
-			log.Printf("rkey's kind is: %+v", rkey.Kind())
-
-			iv := rkey.Interface()
-			vv := reflect.ValueOf(iv)
-			log.Printf("%+v", vv.String())
-		}
-
-	default:
-
+func TestStructAssign(t *testing.T) {
+	type A struct {
+		Name string
+		Age int
 	}
 
+	type B struct {
+		A
+		Company string
+	}
+	a := A{"aa", 13}
+	var b B
+	b.A = a // 可以将A作为B的一部分赋值，用组合的方式实现类似于继承的功能
+
+	log.Printf("%+v", b)
+	log.Printf("%+v", J.ToJson(b))
 }
 
-func main() {
-	log.Printf("haha")
-
-	m := make(map[interface{}]interface{})
-
-	m["haha"] = 1
-	m[123] = 2
-
-	// log.Printf("%+v", m)
-
-	log.Println(validator.IsInt("123"))
-
-}
