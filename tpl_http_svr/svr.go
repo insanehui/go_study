@@ -17,6 +17,19 @@ import (
 
 var db *Mysql.DB
 
+// 一个模板参数的规则结构
+type Para struct {
+	Label      string                 `json:"label"`
+	Name       string                 `json:"name"`
+	Type       string                 `json:"type"`
+	Desc       string                 `json:"description"`
+	Optional   bool                   `json:"optional"`
+	EnumValues map[string]interface{} `json:"enum_values"`
+	Default    interface{}            `json:"default"`
+}
+
+type Paras []Para
+
 // 检查模板id是否存在
 func check_tpl_id_(id string) {
 
@@ -26,6 +39,17 @@ func check_tpl_id_(id string) {
 		panic(fmt.Errorf("template id %s does not exist!", id))
 	}
 
+}
+
+func get_params(id string) Paras {
+	var paras Paras
+	para_fname := path.Join("tpls", id, "para.yaml")
+	Y.FromFileTo_(para_fname, &paras)
+	return paras
+}
+
+// 校验values
+func check_vals(vals interface{}, rules interface{}) {
 }
 
 func get_tpl_params(w http.ResponseWriter, r *http.Request) {
@@ -55,8 +79,7 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 	check_tpl_id_(q.TplId)
 
 	// 读其para的配置文件
-	para_fname := path.Join("tpls", q.TplId, "para.yaml")
-	ret.Data = Y.FromFile(para_fname)
+	ret.Data = get_params(q.TplId)
 
 	log.Printf("%+v", q)
 
@@ -91,17 +114,18 @@ func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 
 	// 取到values
 	vals := J.Str2Var(q.Values)
+
 	// TODO
 	// 验证values有效性
 
-	// 渲染模板
+	// 渲染模板 !! json形式的对象，是不支持模板里的if的
 	tpl_fname := path.Join("tpls", q.TplId, "tpl.yaml") // 找到模板的路径
 	tpl, _ := template.ParseFiles(tpl_fname)            // 实例化模板对象
 
-	buf := new(bytes.Buffer)
-	tpl.Execute(buf, vals)
-	ret.Data = buf.String()
-	log.Printf("%+v", buf.String())
+	bp := new(bytes.Buffer)
+	tpl.Execute(bp, vals)
+	ret.Data = bp.String()
+	log.Printf("%+v", bp.String())
 }
 
 func init() {
