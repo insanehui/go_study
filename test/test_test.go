@@ -68,3 +68,24 @@ func Test_nil(t *testing.T){
 func Test_path(t *testing.T){
 	log.Println(path.Join("a", "b", "c"))
 }
+
+func Test_mixin(t *testing.T){
+	type A struct {
+		I int
+	}
+
+	type B struct {
+		J int
+	}
+
+	type C struct {
+		Aa A 
+		B
+	}
+
+	var c C
+	c.Aa.I = 1 // 这里不能用 c.A.i
+	c.B.J = 2 // 这里只能用c.B.i
+	log.Printf("%+v", c)
+	log.Printf("%+v", J.ToJson(c))
+}
