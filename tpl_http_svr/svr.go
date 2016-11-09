@@ -1,24 +1,32 @@
 package main
 
 import (
-	// "encoding/json"
-	"path"
+	"bytes"
 	"fmt"
-	// "log"
+	"html/template"
 	"log"
 	"net/http"
-	// "strconv"
+	"path"
 	H "utils/http"
-	// J "utils/json"
+	J "utils/json"
 	Mysql "utils/mysql"
 	// "github.com/ghodss/yaml"
 	Y "utils/yaml"
-
-	// _ "github.com/go-sql-driver/mysql"
 	// V "github.com/asaskevich/govalidator"
 )
 
 var db *Mysql.DB
+
+// 检查模板id是否存在
+func check_tpl_id_(id string) {
+
+	// 从数据库查询 tpl_id 是否存在
+	c := db.QryInt("select count(1) from template where id = ?", id)
+	if c <= 0 {
+		panic(fmt.Errorf("template id %s does not exist!", id))
+	}
+
+}
 
 func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 
@@ -44,12 +52,7 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	H.Checkout_(r, &q)
-
-	// 从数据库查询 tpl_id 是否存在
-	res := db.Exist("template", q)
-	if res == nil {
-		panic(fmt.Errorf("template id %s does not exist!", q.TplId))
-	}
+	check_tpl_id_(q.TplId)
 
 	// 读其para的配置文件
 	para_fname := path.Join("tpls", q.TplId, "para.yaml")
@@ -60,6 +63,45 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 }
 
 func gen_blueprint(w http.ResponseWriter, r *http.Request) {
+
+	var q struct {
+		TplId  string `valid:"length(0|64)" json:"id"` // 模板id
+		Values string `valid:"json"`
+	}
+
+	// 定义返回结构
+	var ret struct {
+		Err
+		Data interface{} `json:"data"`
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			// 先支持 error 格式
+			if e, ok := p.(error); ok {
+				log.Printf("haha: %+v", e.Error())
+				ret.FromError(e)
+			}
+		}
+		H.WriteJson(w, ret)
+	}()
+
+	H.Checkout_(r, &q)
+	check_tpl_id_(q.TplId)
+
+	// 取到values
+	vals := J.Str2Var(q.Values)
+	// TODO
+	// 验证values有效性
+
+	// 渲染模板
+	tpl_fname := path.Join("tpls", q.TplId, "tpl.yaml") // 找到模板的路径
+	tpl, _ := template.ParseFiles(tpl_fname)            // 实例化模板对象
+
+	buf := new(bytes.Buffer)
+	tpl.Execute(buf, vals)
+	ret.Data = buf.String()
+	log.Printf("%+v", buf.String())
 }
 
 func init() {
