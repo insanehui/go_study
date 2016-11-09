@@ -7,6 +7,8 @@
 - name: company
   type: string
   description: where you work
+  optional: true
 - name: email
   type: email
   description: Arbitrary key/value metadata
+

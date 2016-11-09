@@ -2,17 +2,18 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path"
 	H "utils/http"
 	J "utils/json"
+	U "utils"
 	Mysql "utils/mysql"
 	// "github.com/ghodss/yaml"
 	Y "utils/yaml"
-	// V "github.com/asaskevich/govalidator"
+
+	V "github.com/asaskevich/govalidator"
 )
 
 var db *Mysql.DB
@@ -36,9 +37,8 @@ func check_tpl_id_(id string) {
 	// 从数据库查询 tpl_id 是否存在
 	c := db.QryInt("select count(1) from template where id = ?", id)
 	if c <= 0 {
-		panic(fmt.Errorf("template id %s does not exist!", id))
+		log.Panicf("template id %s does not exist!", id)
 	}
-
 }
 
 func get_params(id string) Paras {
@@ -49,7 +49,35 @@ func get_params(id string) Paras {
 }
 
 // 校验values
-func check_vals(vals interface{}, rules interface{}) {
+func check_vals_(vals map[string]interface{}, paras Paras) {
+	for _, para := range paras {
+
+		name := para.Name
+		v := vals[name]
+		if v == nil {
+			if para.Optional {
+				continue // 可选值
+			} else {
+				log.Panicf("miss para: %s", name)
+			}
+
+		} else {
+			sv := U.ToStr(v)
+			log.Printf("%s : %s", name, sv)
+
+			switch para.Type {
+			case "int":
+				if !V.IsInt(sv) {
+					log.Panicf("para '%s' is not int", name)
+				}
+			case "email":
+				if !V.IsEmail(sv) {
+					log.Panicf("para '%s' is not email", name)
+				}
+			case "string":
+			}
+		}
+	}
 }
 
 func get_tpl_params(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +98,8 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 			if e, ok := p.(error); ok {
 				log.Printf("haha: %+v", e.Error())
 				ret.FromError(e)
+			} else if e, ok := p.(string); ok {
+				ret.Msg = e
 			}
 		}
 		H.WriteJson(w, ret)
@@ -104,6 +134,8 @@ func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 			if e, ok := p.(error); ok {
 				log.Printf("haha: %+v", e.Error())
 				ret.FromError(e)
+			} else if e, ok := p.(string); ok {
+				ret.Msg = e
 			}
 		}
 		H.WriteJson(w, ret)
@@ -113,10 +145,14 @@ func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 	check_tpl_id_(q.TplId)
 
 	// 取到values
-	vals := J.Str2Var(q.Values)
+	// vals := J.Str2Var(q.Values)
+	var vals map[string]interface{}
+	J.StrTo(q.Values, &vals)
 
-	// TODO
-	// 验证values有效性
+	// 取paras
+	paras := get_params(q.TplId)
+	// 验证
+	check_vals_(vals, paras)
 
 	// 渲染模板 !! json形式的对象，是不支持模板里的if的
 	tpl_fname := path.Join("tpls", q.TplId, "tpl.yaml") // 找到模板的路径
