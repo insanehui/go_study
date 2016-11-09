@@ -1,21 +1,26 @@
 package main
 
 import (
-	"testing"
+	"html/template"
 	"log"
+	"os"
+	"testing"
 	J "utils/json"
-	V "github.com/asaskevich/govalidator"
+	// Y "utils/yaml"
 	"path"
+
+	V "github.com/asaskevich/govalidator"
+	"github.com/ghodss/yaml"
 )
 
-func init() {  
+func init() {
 	V.SetFieldsRequiredByDefault(true)
 }
 
 func TestStructAssign(t *testing.T) {
 	type A struct {
 		Name string
-		Age int
+		Age  int
 	}
 
 	type B struct {
@@ -30,12 +35,12 @@ func TestStructAssign(t *testing.T) {
 	log.Printf("%+v", J.ToJson(b))
 }
 
-func TestValidator(t *testing.T){
+func TestValidator(t *testing.T) {
 	{
 		log.Println("=========================")
-		var q  = struct {
-			TplId string `valid:"length(1|5)"`// 模板id
-		}{ "" }
+		var q = struct {
+			TplId string `valid:"length(1|5)"` // 模板id
+		}{""}
 
 		// err表示具体错误的原因 result直接为bool类型
 		result, err := V.ValidateStruct(&q)
@@ -47,9 +52,9 @@ func TestValidator(t *testing.T){
 
 	{
 		log.Println("=========================")
-		var q  = struct {
-			TplId string `valid:"length(0|3)"`// 模板id
-		}{ "haha" }
+		var q = struct {
+			TplId string `valid:"length(0|3)"` // 模板id
+		}{"haha"}
 
 		// err表示具体错误的原因 result直接为bool类型
 		result, err := V.ValidateStruct(&q)
@@ -60,16 +65,16 @@ func TestValidator(t *testing.T){
 	}
 }
 
-func Test_nil(t *testing.T){
+func Test_nil(t *testing.T) {
 	var s []string // slice的初始状态为nil
 	log.Println(s == nil)
 }
 
-func Test_path(t *testing.T){
+func Test_path(t *testing.T) {
 	log.Println(path.Join("a", "b", "c"))
 }
 
-func Test_mixin(t *testing.T){
+func Test_mixin(t *testing.T) {
 	type A struct {
 		I int
 	}
@@ -79,13 +84,42 @@ func Test_mixin(t *testing.T){
 	}
 
 	type C struct {
-		Aa A 
+		Aa A
 		B
 	}
 
 	var c C
 	c.Aa.I = 1 // 这里不能用 c.A.i
-	c.B.J = 2 // 这里只能用c.B.i
+	c.B.J = 2  // 这里只能用c.B.i
 	log.Printf("%+v", c)
 	log.Printf("%+v", J.ToJson(c))
+}
+
+func Test_yaml2tpl(t *testing.T) {
+	str := `
+Name:    1
+Age:     30
+Company: 2
+`
+	// var m map[string]interface{} // map的值为 interface{}的话，是不能对if生效的
+	var m map[string]int // 定成具体类型之后，才可以
+
+	yaml.Unmarshal([]byte(str), &m)
+	log.Printf("%+v", m)
+
+
+	tmpl, _ := template.New("xx").Parse(`
+
+		my name is {{.Name}}
+		i'm {{.Age}} years old
+		{{if gt .Age 10}}
+		i'm an adult
+		{{else}}
+		i'm a child
+		{{end}}
+
+
+		`)
+
+	tmpl.Execute(os.Stdout, m)
 }
