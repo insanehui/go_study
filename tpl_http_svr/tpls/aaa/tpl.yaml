@@ -1,0 +1,38 @@
+template_version: 2015-10-15
+
+description: hahah
+
+parameters:
+  name:
+    type: string
+    description: this's your name
+  age:
+    type: int
+    description: how old are you
+  company:
+    type: string
+    description: where you work
+  email:
+    type: email
+    description: Arbitrary key/value metadata
+
+resources:
+  sample_host_aggregate:
+    type: OS::XX::CC
+    properties:
+      name: {{.name}}
+      age: {{.age}}
+      company: {{.company}}
+      email: {{.email}}
+
+outputs:
+  sample_host_aggregate_id:
+    value: {{.email}}
+    message: asdfsaf
+    {{if gt .age 18}}
+    company: adult
+    {{else}}
+    school: kid
+    {{end}}
+
+
