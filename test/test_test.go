@@ -123,3 +123,18 @@ Company: 2
 
 	tmpl.Execute(os.Stdout, m)
 }
+
+func Test_booldef(t *testing.T){
+	var a bool
+	log.Println(a == false)
+	log.Println(a == true)
+}
+
+func Test_interface(t *testing.T){
+	var a interface{}
+	a = false
+	log.Println(a == nil)
+	a = 1
+	log.Println(a == true)
+	log.Println(a.(int))
+}

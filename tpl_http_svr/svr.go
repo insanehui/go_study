@@ -1,14 +1,15 @@
 package main
 
 import (
+	"io"
 	"bytes"
 	"html/template"
 	"log"
 	"net/http"
 	"path"
+	U "utils"
 	H "utils/http"
 	J "utils/json"
-	U "utils"
 	Mysql "utils/mysql"
 	// "github.com/ghodss/yaml"
 	Y "utils/yaml"
@@ -24,9 +25,9 @@ type Para struct {
 	Name       string                 `json:"name"`
 	Type       string                 `json:"type"`
 	Desc       string                 `json:"description"`
-	Optional   bool                   `json:"optional"`
-	EnumValues map[string]interface{} `json:"enum_values"`
-	Default    interface{}            `json:"default"`
+	Optional   bool                   `json:"optional,omitempty"`
+	EnumValues map[string]interface{} `json:"enum_values,omitempty"`
+	Default    interface{}            `json:"default,omitempty"`
 }
 
 type Paras []Para
@@ -118,14 +119,15 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 
 	var q struct {
-		TplId  string `valid:"length(0|64)" json:"id"` // 模板id
+		TplId  string `valid:"length(0|64)"` // 模板id
 		Values string `valid:"json"`
+		Op     string `valid:"-"` // 可选参数, 暂时支持 get_yaml
 	}
 
 	// 定义返回结构
 	var ret struct {
 		Err
-		Data interface{} `json:"data"`
+		Data string `json:"data"`
 	}
 
 	defer func() {
@@ -138,7 +140,12 @@ func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 				ret.Msg = e
 			}
 		}
-		H.WriteJson(w, ret)
+
+		if q.Op == "get_yaml" {
+			io.WriteString(w, ret.Data)
+		} else {
+			H.WriteJson(w, ret)
+		}
 	}()
 
 	H.Checkout_(r, &q)
