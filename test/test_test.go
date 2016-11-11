@@ -143,3 +143,4 @@ func Test_make(t *testing.T){
 	var m map[string]int
 	// m["aa"] = 1 // m为nil，这样执行会panic
 }
+
