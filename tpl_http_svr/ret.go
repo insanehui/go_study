@@ -7,6 +7,10 @@ type Err struct {
 	Msg  string `json:"msg"`  // 错误消息
 }
 
+func (me *Err) Ok() bool {
+	return me.Code == 0
+}
+
 func (me *Err) FromStr(s string) {
 	me.Msg = s;
 	me.Code = -1; // 缺省设为-1吧

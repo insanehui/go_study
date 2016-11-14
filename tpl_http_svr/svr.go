@@ -116,23 +116,8 @@ func get_tpl_params_old(w http.ResponseWriter, r *http.Request) {
 
 }
 
-type IHttpRet interface {
-	FromPanic(interface{})
-}
-
-// para为自定义的传入参数
-// ret为自定义的返回参数
-func http_json(w http.ResponseWriter, r *http.Request, para interface{}, ret IHttpRet, fn func()) {
-
-	defer func() {
-		if p := recover(); p != nil {
-			ret.FromPanic(p)
-		}
-		H.WriteJson(w, ret)
-	}()
-
-	H.Checkout_(r, para)
-	fn()
+func test(w http.ResponseWriter, r *http.Request) {
+	panic("fuck")
 }
 
 func get_tpl_params(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +133,7 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 		Data interface{} `json:"data"`
 	}
 
-	http_json(w, r, &q, &ret, func() {
+	H.JsonDo(w, r, &q, &ret, func() {
 
 		// check_tpl_id_(q.TplId)
 
@@ -157,19 +142,6 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 
 	})
 
-}
-
-// 更通用的（不一定返回json）
-// end(p) 将在 defer里执行, 参数p 为panic
-func http_do(w http.ResponseWriter, r *http.Request, para interface{}, ret interface{}, fn func(), end func(p interface{})) {
-
-	defer func() {
-		p := recover()
-		end(p)
-	}()
-
-	H.Checkout_(r, para)
-	fn()
 }
 
 func gen_blueprint_old(w http.ResponseWriter, r *http.Request) {
@@ -241,42 +213,41 @@ func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 		Data string `json:"data"`
 	}
 
-	http_do(w, r, &q, &ret, func() {
+	H.Do(w, r, &q, &ret,
+		func() {
 
-		// check_tpl_id_(q.TplId)
+			// check_tpl_id_(q.TplId)
 
-		// 取到values
-		var vals map[string]interface{}
-		J.StrTo(q.Values, &vals)
+			// 取到values
+			var vals map[string]interface{}
+			J.StrTo(q.Values, &vals)
 
-		// 取paras
-		paras := get_params(q.TplId)
-		// 验证
-		check_vals_(vals, paras)
+			// 取paras
+			paras := get_params(q.TplId)
+			// 验证
+			check_vals_(vals, paras)
 
-		// 渲染模板 !! json形式的对象，是不支持模板里的if的
-		tpl_fname := path.Join("tpls", q.TplId, "tpl.yaml") // 找到模板的路径
-		tpl, _ := template.ParseFiles(tpl_fname)            // 实例化模板对象
+			// 渲染模板 !! json形式的对象，是不支持模板里的if的
+			tpl_fname := path.Join("tpls", q.TplId, "tpl.yaml") // 找到模板的路径
+			tpl, _ := template.ParseFiles(tpl_fname)            // 实例化模板对象
 
-		bp := new(bytes.Buffer)
-		tpl.Execute(bp, vals)
-		ret.Data = bp.String()
-		log.Printf("%+v", bp.String())
+			bp := new(bytes.Buffer)
+			tpl.Execute(bp, vals)
+			ret.Data = bp.String()
+			log.Printf("%+v", bp.String())
 
-	},
-		func(p interface{}) {
+		},
+		func(p interface{}) { // in defer
 			if p != nil {
-				// 先支持 error 格式
-				if e, ok := p.(error); ok {
-					log.Printf("haha: %+v", e.Error())
-					ret.FromError(e)
-				} else if e, ok := p.(string); ok {
-					ret.Msg = e
-				}
+				ret.FromPanic(p)
 			}
 
 			if q.Op == "get_yaml" {
-				io.WriteString(w, ret.Data)
+				if ret.Ok() {
+					io.WriteString(w, ret.Data)
+				} else {
+					http.Error(w, ret.Msg, http.StatusNotFound)
+				}
 			} else {
 				H.WriteJson(w, ret)
 			}
@@ -290,10 +261,10 @@ func init() {
 
 	http.HandleFunc("/get_tpl_params", get_tpl_params)
 	http.HandleFunc("/gen_blueprint", gen_blueprint)
-	// http.HandleFunc("/test", test)
+	http.HandleFunc("/test", test)
 }
 
 func main() {
 	log.Println("running...")
-	log.Fatal(http.ListenAndServe(":80", nil))
+	http.ListenAndServe(":80", nil)
 }
