@@ -116,6 +116,69 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type IHttpRet interface {
+	FromPanic(interface{})
+}
+
+// para为自定义的传入参数
+// ret为自定义的返回参数
+func http_json(w http.ResponseWriter, r *http.Request, para interface{}, ret IHttpRet,  fn func()) {
+
+	defer func() {
+		if p := recover(); p != nil {
+			ret.FromPanic(p)
+		// 	// 先支持 error 格式
+		// 	if e, ok := p.(error); ok {
+		// 		log.Printf("haha: %+v", e.Error())
+		// 		ret.FromError(e)
+		// 	} else if e, ok := p.(string); ok {
+		// 		ret.Msg = e
+		// 	}
+		// }
+
+		// if q.Op == "get_yaml" {
+		// 	io.WriteString(w, ret.Data)
+		// } else {
+		// 	H.WriteJson(w, ret)
+		// }
+		}
+		H.WriteJson(w, ret)
+	}()
+
+	H.Checkout_(r, &para)
+	fn()
+
+}
+
+func test(w http.ResponseWriter, r *http.Request) {
+
+	// 传入参数
+	var q struct {
+		TplId string `valid:"length(0|64)" json:"id"` // 模板id
+	}
+
+	// 返回
+	var ret struct {
+		Err
+		Data interface{} `json:"data"`
+	}
+
+	http_json(w, r, q, &ret, func(){
+
+		check_tpl_id_(q.TplId)
+
+		// 读其para的配置文件
+		ret.Data = get_params(q.TplId)
+
+	})
+
+}
+
+// 更通用的（不一定返回json）
+// 待研究
+func http_do(para interface{}, ret interface{},  fn func(), /*...*/) {
+}
+
 func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 
 	var q struct {
@@ -177,6 +240,7 @@ func init() {
 
 	http.HandleFunc("/get_tpl_params", get_tpl_params)
 	http.HandleFunc("/gen_blueprint", gen_blueprint)
+	http.HandleFunc("/test", test)
 }
 
 func main() {

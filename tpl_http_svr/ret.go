@@ -16,3 +16,13 @@ func (me *Err) FromError(e error) {
 	me.Msg = e.Error();
 	me.Code = -1; // 缺省设为-1吧
 }
+
+func (me *Err) FromPanic(p interface{}) {
+	// 先支持 error 格式
+	if e, ok := p.(error); ok {
+		me.FromError(e)
+	} else if e, ok := p.(string); ok {
+		me.FromStr(e)
+	}
+}
+
