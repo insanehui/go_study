@@ -17,7 +17,7 @@
   label: Sex
   type: enum
   enum_values:
-    - 1 : Male
-    - 0 : Female
+    1 : Male
+    0 : Female
   default: 1
   description: you are a man or a women?
