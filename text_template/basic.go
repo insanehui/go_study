@@ -1,31 +1,53 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
-	"log"
 	"os"
+	"reflect"
+	"strings"
 	J "utils/json"
 )
 
+func toint(i interface{}) int {
+	if v, ok := i.(int); ok {
+		return v
+	} else if v, ok := i.(float64); ok {
+		return int(v)
+	}
+	return 0
+}
+
+func kind(i interface{}) string {
+	v := reflect.ValueOf(i)
+	return fmt.Sprintf("%+v", v.Type())
+}
+
 func main() {
+
+	funcMap := template.FuncMap{
+		"toint": toint,
+		"title": strings.Title,
+		"kind":  kind,
+	}
 
 	{
 		data := map[string]interface{}{
-			"Name":    "guanghui",
+			"Name":    "guanghui li",
 			"Age":     30,
 			"Company": "CloudToGo",
 		}
 
-		tmpl, _ := template.New("test").Parse(`
+		tmpl, _ := template.New("test").Funcs(funcMap).Parse(`
 
-		my name is {{.Name}}
+		my name is {{title .Name}}
+		my name is {{title "aa bb"}}
 		i'm {{.Age}} years old
 		{{if gt .Age 10}}
 		i'm an adult
 		{{else}}
 		i'm a child
 		{{end}}
-
 
 		`)
 
@@ -38,13 +60,16 @@ func main() {
 			"Age":     30,
 			"Company": "CloudToGo"
 		}`)
-		log.Printf("%+v", data)
 
-		tmpl, _ := template.New("xx").Parse(`
+		tmpl, _ := template.New("xx").Funcs(funcMap).Parse(`
 
 		my name is {{.Name}}
 		i'm {{.Age}} years old
-		{{if gt .Age 10}}
+		{{$a := "123"}}{{/* 定义一个变量 */}}
+		{{ toint .Age }}
+		{{kind .Age}}
+		{{title "aa bb cc"}}
+		{{if gt .Age 10.0}}
 		i'm an adult
 		{{else}}
 		i'm a child
