@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"strconv"
 	"testing"
 	J "utils/json"
 	// Y "utils/yaml"
@@ -107,7 +108,6 @@ Company: 2
 	yaml.Unmarshal([]byte(str), &m)
 	log.Printf("%+v", m)
 
-
 	tmpl, _ := template.New("xx").Parse(`
 
 		my name is {{.Name}}
@@ -124,13 +124,13 @@ Company: 2
 	tmpl.Execute(os.Stdout, m)
 }
 
-func Test_booldef(t *testing.T){
+func Test_booldef(t *testing.T) {
 	var a bool
 	log.Println(a == false)
 	log.Println(a == true)
 }
 
-func Test_interface(t *testing.T){
+func Test_interface(t *testing.T) {
 	var a interface{}
 	a = false
 	log.Println(a == nil)
@@ -139,8 +139,19 @@ func Test_interface(t *testing.T){
 	log.Println(a.(int))
 }
 
-func Test_make(t *testing.T){
+func Test_make(t *testing.T) {
 	// var m map[string]int
 	// m["aa"] = 1 // m为nil，这样执行会panic
 }
 
+func Test_strconv(t *testing.T) {
+	var i interface{}
+	
+	defer log.Printf("hahahah")
+
+	i = 1
+	switch j := i.(type) { // 这里要赋给另一个值，为了减少变量，在不造成歧义的情况下，可这样写: i := i.(type)
+	case int:
+		log.Println(strconv.Itoa(j)) // 这里不能传入i
+	}
+}
