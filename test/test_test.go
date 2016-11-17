@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"os"
@@ -146,7 +147,7 @@ func Test_make(t *testing.T) {
 
 func Test_strconv(t *testing.T) {
 	var i interface{}
-	
+
 	defer log.Printf("hahahah")
 
 	i = 1
@@ -156,3 +157,59 @@ func Test_strconv(t *testing.T) {
 	}
 }
 
+func Test_print(t *testing.T) {
+	i := 123
+	fmt.Println(i)
+}
+
+
+type C struct {
+}
+
+func (me *C) F() {
+	log.Printf("f")
+}
+
+func (me *C) G() {
+	log.Printf("g")
+}
+
+func Test_intf_assert(t *testing.T) {
+	type A interface {
+		F()
+	}
+	type B interface {
+		G()
+	}
+
+	var c C
+	var i interface{}
+	i = &c
+
+	switch v := i.(type) {
+	// 以下几个条件都符合
+	// 所以谁在前面谁就被执行
+	case B:
+		log.Printf("bb")
+		v.G()
+	case *C:
+		log.Printf("cc")
+	case A:
+		log.Printf("aa")
+		v.F()
+	default:
+		log.Printf("......")
+	}
+
+	if _, ok:= i.(B); ok {
+		log.Printf("shit b")
+	}
+
+	if _, ok:= i.(A); ok {
+		log.Printf("shit a")
+	}
+
+	if _, ok:= i.(*C); ok {
+		log.Printf("shit c")
+	}
+}
