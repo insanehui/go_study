@@ -10,6 +10,7 @@ import (
 	U "utils"
 	H "utils/http"
 	J "utils/json"
+	I "utils/io"
 	Mysql "utils/mysql"
 	// "github.com/ghodss/yaml"
 	Y "utils/yaml"
@@ -81,41 +82,6 @@ func check_vals_(vals map[string]interface{}, paras Paras) {
 	}
 }
 
-func get_tpl_params_old(w http.ResponseWriter, r *http.Request) {
-
-	var q struct {
-		TplId string `valid:"length(0|64)" json:"id"` // 模板id
-	}
-
-	// 定义返回结构
-	var ret struct {
-		Err
-		Data interface{} `json:"data"`
-	}
-
-	defer func() {
-		if p := recover(); p != nil {
-			// 先支持 error 格式
-			if e, ok := p.(error); ok {
-				log.Printf("haha: %+v", e.Error())
-				ret.FromError(e)
-			} else if e, ok := p.(string); ok {
-				ret.Msg = e
-			}
-		}
-		H.WriteJson(w, ret)
-	}()
-
-	H.Checkout_(r, &q)
-	check_tpl_id_(q.TplId)
-
-	// 读其para的配置文件
-	ret.Data = get_params(q.TplId)
-
-	log.Printf("%+v", q)
-
-}
-
 func test(w http.ResponseWriter, r *http.Request) {
 	panic("fuck")
 }
@@ -124,7 +90,7 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 
 	// 传入参数
 	var q struct {
-		TplId string `valid:"length(0|64)" json:"id"` // 模板id
+		TplId string `valid:"length(1|64)" json:"id"` // 模板id
 	}
 
 	// 返回
@@ -144,65 +110,10 @@ func get_tpl_params(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func gen_blueprint_old(w http.ResponseWriter, r *http.Request) {
-
-	var q struct {
-		TplId  string `valid:"length(0|64)"` // 模板id
-		Values string `valid:"json"`
-		Op     string `valid:"-"` // 可选参数, 暂时支持 get_yaml
-	}
-
-	// 定义返回结构
-	var ret struct {
-		Err
-		Data string `json:"data"`
-	}
-
-	defer func() {
-		if p := recover(); p != nil {
-			// 先支持 error 格式
-			if e, ok := p.(error); ok {
-				log.Printf("haha: %+v", e.Error())
-				ret.FromError(e)
-			} else if e, ok := p.(string); ok {
-				ret.Msg = e
-			}
-		}
-
-		if q.Op == "get_yaml" {
-			io.WriteString(w, ret.Data)
-		} else {
-			H.WriteJson(w, ret)
-		}
-	}()
-
-	H.Checkout_(r, &q)
-	check_tpl_id_(q.TplId)
-
-	// 取到values
-	// vals := J.Str2Var(q.Values)
-	var vals map[string]interface{}
-	J.StrTo(q.Values, &vals)
-
-	// 取paras
-	paras := get_params(q.TplId)
-	// 验证
-	check_vals_(vals, paras)
-
-	// 渲染模板 !! json形式的对象，是不支持模板里的if的
-	tpl_fname := path.Join("tpls", q.TplId, "tpl.yaml") // 找到模板的路径
-	tpl, _ := template.ParseFiles(tpl_fname)            // 实例化模板对象
-
-	bp := new(bytes.Buffer)
-	tpl.Execute(bp, vals)
-	ret.Data = bp.String()
-	log.Printf("%+v", bp.String())
-}
-
 func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 
 	var q struct {
-		TplId  string `valid:"length(0|64)"` // 模板id
+		TplId  string `valid:"length(1|64)"` // 模板id
 		Values string `valid:"json"`
 		Op     string `valid:"-"` // 可选参数, 暂时支持 get_yaml
 	}
@@ -255,16 +166,55 @@ func gen_blueprint(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// 新增一个模板
+func new_tpl(w http.ResponseWriter, r *http.Request) {
+
+	// 传入参数
+	var q struct {
+		TplId string `valid:"-"` // 模板id
+		Paras string `valid:"-"`
+		Tpl string `valid:"length(1|99999)"`
+	}
+
+	// 返回
+	var ret struct {
+		Err
+		Data struct { 
+			TplId string `json:"tpl_id"`
+		} `json:"data"`
+	}
+
+	H.JsonDo(w, r, &q, &ret, func() {
+		id := q.TplId
+
+		TplInit_(id)
+
+		if data := q.Tpl; data != "" {
+			p := TplPath(id)
+			I.WriteFile_(p, data)
+		}
+
+		if data := q.Paras; data != "" {
+			p := TplParaPath(id)
+			I.WriteFile_(p, data)
+		}
+
+		ret.Data.TplId = q.TplId
+	})
+
+}
+
 func init() {
 
 	db = Mysql.Open_("mysql", "blueprint:ctg123@tcp(10.10.12.2:3306)/blueprint?charset=utf8")
 
 	http.HandleFunc("/get_tpl_params", get_tpl_params)
 	http.HandleFunc("/gen_blueprint", gen_blueprint)
+	http.HandleFunc("/new_tpl", new_tpl)
 	http.HandleFunc("/test", test)
 }
 
 func main() {
 	log.Println("running...")
-	http.ListenAndServe(":80", nil)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
