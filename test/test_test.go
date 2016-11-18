@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -10,6 +11,9 @@ import (
 	J "utils/json"
 	// Y "utils/yaml"
 	"path"
+
+	"net/http"
+	"net/url"
 
 	V "github.com/asaskevich/govalidator"
 	"github.com/ghodss/yaml"
@@ -162,7 +166,6 @@ func Test_print(t *testing.T) {
 	fmt.Println(i)
 }
 
-
 type C struct {
 }
 
@@ -201,15 +204,39 @@ func Test_intf_assert(t *testing.T) {
 		log.Printf("......")
 	}
 
-	if _, ok:= i.(B); ok {
+	if _, ok := i.(B); ok {
 		log.Printf("shit b")
 	}
 
-	if _, ok:= i.(A); ok {
+	if _, ok := i.(A); ok {
 		log.Printf("shit a")
 	}
 
-	if _, ok:= i.(*C); ok {
+	if _, ok := i.(*C); ok {
 		log.Printf("shit c")
 	}
+}
+
+func Test_postform(t *testing.T) {
+
+	tpl := `
+aaa
+ bbb
+  cccc
+`
+
+	resp, err := http.PostForm("http://localhost:8080/new_tpl",
+		url.Values{"tpl_id": {"12345"}, "tpl": {tpl}})
+
+	if err != nil {
+		log.Printf("post err: %+v", err)
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("response err: %+v", err)
+	}
+
+	fmt.Println(string(body))
 }
