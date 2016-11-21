@@ -17,6 +17,7 @@ import (
 
 	V "github.com/asaskevich/govalidator"
 	"github.com/ghodss/yaml"
+	"github.com/satori/go.uuid"
 )
 
 func init() {
@@ -239,4 +240,9 @@ aaa
 	}
 
 	fmt.Println(string(body))
+}
+
+func Test_uuid(t *testing.T) {
+	u1 := uuid.NewV4()
+	fmt.Printf("UUIDv4: %s\n", u1)
 }
