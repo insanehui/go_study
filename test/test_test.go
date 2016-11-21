@@ -25,6 +25,23 @@ func init() {
 	V.SetFieldsRequiredByDefault(true)
 }
 
+func Test_valid1(t *testing.T) {
+	{
+		log.Println("=========================")
+		var q = struct {
+			A string `valid:"ip"`
+			B string `valid:"int"`
+		}{"1.1.1.1",""}
+
+		// err表示具体错误的原因 result直接为bool类型
+		result, err := V.ValidateStruct(&q)
+		if err != nil {
+			log.Println("error: " + err.Error())
+		}
+		log.Println(result)
+	}
+}
+
 func TestStructAssign(t *testing.T) {
 	type A struct {
 		Name string
