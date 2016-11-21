@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"testing"
 	J "utils/json"
@@ -245,4 +246,16 @@ aaa
 func Test_uuid(t *testing.T) {
 	u1 := uuid.NewV4()
 	fmt.Printf("UUIDv4: %s\n", u1)
+}
+
+func Test_reflect(t *testing.T) {
+	type My int
+	var i My
+	i = 1
+	rv := reflect.ValueOf(i)
+	tp := reflect.TypeOf(i)
+	log.Println( tp == rv.Type() ) // true
+	log.Println(rv.Type()) // main.My
+	log.Println(rv.Kind()) // int
+	log.Println(reflect.ValueOf(&i).Kind()) // 
 }
