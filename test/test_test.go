@@ -12,13 +12,14 @@ import (
 	J "utils/json"
 	// Y "utils/yaml"
 	"path"
+	"github.com/satori/go.uuid"
 
 	"net/http"
 	"net/url"
+	I "utils/io"
 
 	V "github.com/asaskevich/govalidator"
 	"github.com/ghodss/yaml"
-	"github.com/satori/go.uuid"
 )
 
 func init() {
@@ -31,7 +32,7 @@ func Test_valid1(t *testing.T) {
 		var q = struct {
 			A string `valid:"ip"`
 			B string `valid:"int"`
-		}{"1.1.1.1",""}
+		}{"1.1.1.1", ""}
 
 		// err表示具体错误的原因 result直接为bool类型
 		result, err := V.ValidateStruct(&q)
@@ -271,8 +272,50 @@ func Test_reflect(t *testing.T) {
 	i = 1
 	rv := reflect.ValueOf(i)
 	tp := reflect.TypeOf(i)
-	log.Println( tp == rv.Type() ) // true
-	log.Println(rv.Type()) // main.My
-	log.Println(rv.Kind()) // int
-	log.Println(reflect.ValueOf(&i).Kind()) // 
+	log.Println(tp == rv.Type())            // true
+	log.Println(rv.Type())                  // main.My
+	log.Println(rv.Kind())                  // int
+	log.Println(reflect.ValueOf(&i).Kind()) //
+}
+
+func Test_log(t *testing.T) {
+	// 定义一个文件
+	fileName := "ll.log"
+	logFile, err := os.Create(fileName)
+	defer logFile.Close()
+	if err != nil {
+		log.Fatalln("open file error !")
+	}
+	// 创建一个日志对象
+	debugLog := log.New(logFile, "[Debug]", log.LstdFlags)
+	debugLog.Println("A debug message here")
+	//配置一个日志格式的前缀
+	debugLog.SetPrefix("[Info]")
+	debugLog.Println("A Info Message here ")
+	//配置log的Flag参数
+	debugLog.SetFlags(debugLog.Flags() | log.LstdFlags)
+	debugLog.Println("A different prefix")
+}
+
+func Test_delims(t *testing.T) {
+
+	{
+		data := map[string]interface{}{
+			"Name":    "guanghui li",
+			"Age":     30,
+			"Company": "CloudToGo",
+		}
+
+		b := I.ReadFile_("tpl")
+		tmpl, _ := template.New("test").Delims("<%", "%>").Parse(string(b))
+
+		// tmpl, _ := template.New("test").Delims("<%", "%>").Parse(`
+// my name is <% .Name %>
+		// `)
+
+		// 用以下方法，是不生效的！
+		// tmpl, _ := template.New("test").Delims("<%", "%>").ParseFiles("tpl")
+
+		tmpl.Execute(os.Stdout, data)
+	}
 }
