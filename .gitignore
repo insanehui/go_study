@@ -4,3 +4,4 @@
 *.exe
 *.swp
 /tpl_http_svr/tpls
+*.log
