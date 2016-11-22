@@ -9,8 +9,8 @@ import (
 	"path"
 	U "utils"
 	H "utils/http"
-	J "utils/json"
 	I "utils/io"
+	J "utils/json"
 	Mysql "utils/mysql"
 	// "github.com/ghodss/yaml"
 	Y "utils/yaml"
@@ -173,13 +173,13 @@ func new_tpl(w http.ResponseWriter, r *http.Request) {
 	var q struct {
 		TplId string `valid:"-"` // 模板id
 		Paras string `valid:"-"`
-		Tpl string `valid:"length(1|99999)"`
+		Tpl   string `valid:"length(1|99999)"`
 	}
 
 	// 返回
 	var ret struct {
 		Err
-		Data struct { 
+		Data struct {
 			TplId string `json:"tpl_id"`
 		} `json:"data"`
 	}

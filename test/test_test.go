@@ -12,6 +12,7 @@ import (
 	J "utils/json"
 	// Y "utils/yaml"
 	"path"
+
 	"github.com/satori/go.uuid"
 
 	"net/http"
@@ -310,7 +311,7 @@ func Test_delims(t *testing.T) {
 		tmpl, _ := template.New("test").Delims("<%", "%>").Parse(string(b))
 
 		// tmpl, _ := template.New("test").Delims("<%", "%>").Parse(`
-// my name is <% .Name %>
+		// my name is <% .Name %>
 		// `)
 
 		// 用以下方法，是不生效的！
