@@ -158,11 +158,17 @@ func Test_booldef(t *testing.T) {
 
 func Test_interface(t *testing.T) {
 	var a interface{}
-	a = false
-	log.Println(a == nil)
-	a = 1
-	log.Println(a == true)
-	log.Println(a.(int))
+	type B struct {
+		I int
+	}
+	var b = B{ 8 }
+	log.Printf("b: %+v", b)
+	a = &b
+	if a, ok := a.(*B); ok {
+		a.I = 9
+		log.Printf("a.I: %+v", a.I)
+	}
+	log.Printf("b again: %+v", b)
 }
 
 func Test_make(t *testing.T) {
@@ -320,3 +326,27 @@ func Test_delims(t *testing.T) {
 		tmpl.Execute(os.Stdout, data)
 	}
 }
+
+func Test_json_rule(t *testing.T) {
+	// struct
+	// {
+	// 	var a = struct{
+	// 		A int
+	// 		B string
+	// 	}{
+	// 		1,
+	// 		"haha",
+	// 	}
+
+	// 	log.Printf("json: %+v", J.)
+	// }
+
+	{
+	// str := `
+// {
+	// "a
+// }
+	// `
+	}
+}
+
