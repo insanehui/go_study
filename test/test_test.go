@@ -13,11 +13,14 @@ import (
 	// Y "utils/yaml"
 	"path"
 
+	"github.com/fatih/structs"
 	"github.com/satori/go.uuid"
 
 	"net/http"
 	"net/url"
 	I "utils/io"
+
+	_ "utils/log/stdout"
 
 	V "github.com/asaskevich/govalidator"
 	"github.com/ghodss/yaml"
@@ -161,7 +164,7 @@ func Test_interface(t *testing.T) {
 	type B struct {
 		I int
 	}
-	var b = B{ 8 }
+	var b = B{8}
 	log.Printf("b: %+v", b)
 	a = &b
 	if a, ok := a.(*B); ok {
@@ -283,6 +286,28 @@ func Test_reflect(t *testing.T) {
 	log.Println(rv.Type())                  // main.My
 	log.Println(rv.Kind())                  // int
 	log.Println(reflect.ValueOf(&i).Kind()) //
+
+	{
+		var a = struct {
+			A int
+			B string
+			c string // 以小写字母开头的变量，json是不会解析它. 但reflect还是可以对其操作
+		}{
+			1,
+			"haha",
+			"heihei",
+		}
+
+		// rv := reflect.ValueOf(a)
+		n := structs.Names(a)
+		log.Printf("n: %+v", n)
+
+		for _, fd :=  range structs.Fields(a) {
+			log.Printf("fd: %+v", fd)
+		}
+
+		// log.Printf("json: %+v", J.ToJson(a))
+	}
 }
 
 func Test_log(t *testing.T) {
@@ -329,24 +354,18 @@ func Test_delims(t *testing.T) {
 
 func Test_json_rule(t *testing.T) {
 	// struct
-	// {
-	// 	var a = struct{
-	// 		A int
-	// 		B string
-	// 	}{
-	// 		1,
-	// 		"haha",
-	// 	}
-
-	// 	log.Printf("json: %+v", J.)
-	// }
-
 	{
-	// str := `
-// {
-	// "a
-// }
-	// `
+		var a = struct {
+			AIDCard int
+			BullShit string
+			c string // 以小写字母开头的变量，json是不会解析它
+			// reflect其实是能够访问到的，其根据( PkgPath不为空 && 不是匿名 )的标记来判断这是一个不导出的变量，对其忽略
+		}{
+			1,
+			"haha",
+			"heihei",
+		}
+
+		log.Printf("json: %+v", J.ToJson(a))
 	}
 }
-
