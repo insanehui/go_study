@@ -52,7 +52,10 @@ import (
 	"strings"
 )
 
-var targetURL *url.URL
+var targetURL = &url.URL{
+	Scheme: "http",
+	Host:   "www.baidu.com",
+}
 
 func singleJoiningSlash(a, b string) string {
 	aslash := strings.HasSuffix(a, "/")
@@ -119,17 +122,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	url, err := url.Parse("http://www.baidu.com")
-
-	if err != nil {
-		log.Println("Bad target URL")
-	}
-
-	targetURL = url
-
 	http.HandleFunc("/", handler)
-
 	log.Println("Start serving on port 1234")
-
 	http.ListenAndServe(":1234", nil)
 }
