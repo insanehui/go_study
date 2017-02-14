@@ -45,11 +45,10 @@
 package main
 
 import (
-	"net/http"
-	"net/url"
 	"io"
 	"log"
-	"os"
+	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -133,6 +132,4 @@ func main() {
 	log.Println("Start serving on port 1234")
 
 	http.ListenAndServe(":1234", nil)
-
-	os.Exit(0)
 }
