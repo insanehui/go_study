@@ -1,20 +1,26 @@
+// 测试命令：
+// <url:vimscript:!go run % --call=f shit -ca -cb> 演示长选项名的形式，以及重复选项
+// <url:vimscript:!go run % -nf shit> 短选项名
+
 package main
 
 import (
-	"fmt"
+	"log"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	// flags are options, with pre "-"
-	verbose = kingpin.Flag("verbose", "Verbose mode.").Short('v').Bool()
+	// 选项，带有"-"前缀
+	n = kingpin.Flag("call", "my name").Short('n').String() // 单个值选项
+	c = kingpin.Flag("collect", "my collection").Short('c').Strings() // 多个值选项
 
-	// args are arguments without "-"
-	name = kingpin.Arg("name", "Name of user.").Required().String()
+	// 参数：没有"-"前缀
+	arg = kingpin.Arg("arg", "the arg").Required().String()
 )
 
 func main() {
 	kingpin.Parse()
-	fmt.Printf("%v, %s\n", *verbose, *name)
+	log.Printf("%v, %s\n", *n, *arg)
+	log.Printf("*c: %+v", *c)
 }
