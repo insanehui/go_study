@@ -74,26 +74,20 @@ func RProxy(url_path string) http.HandlerFunc {
 
 	return func (w http.ResponseWriter, r *http.Request) {
 
-		log.Printf("raw query: %+v", r.URL.RawQuery)
-
 		o := new(http.Request)
 
 		*o = *r
 
+		// 重设host
 		o.Host = target.Host
+
+		// 重设url
 		o.URL.Scheme = target.Scheme
 		o.URL.Host = target.Host
-
-		o.URL.Path = singleJoiningSlash(target.Path, o.URL.Path) // 这里作了一些文章
-
-		if q := o.URL.RawQuery; q != "" {
-			o.URL.RawPath = o.URL.Path + "?" + q
-		} else {
-			o.URL.RawPath = o.URL.Path
-		}
-
+		o.URL.Path = target.Path
 		o.URL.RawQuery = r.URL.RawQuery
 
+		// ======================= [COPIED BEGIN 以下代码拷贝而来未改动] ==================
 		o.Proto = "HTTP/1.1"
 		o.ProtoMajor = 1
 		o.ProtoMinor = 1
@@ -126,6 +120,7 @@ func RProxy(url_path string) http.HandlerFunc {
 		if res.Body != nil {
 			io.Copy(w, res.Body)
 		}
+		// ======================= [COPIED END] ==================
 	}
 }
 
@@ -182,7 +177,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", RProxy("http://localhost:8084/expand_blueprint"))
+	http.HandleFunc("/test", RProxy("http://localhost:8084/expand_blueprint"))
 	log.Println("Start serving on port 1234")
 	http.ListenAndServe(":1234", nil)
 }
