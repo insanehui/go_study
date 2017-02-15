@@ -50,6 +50,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	H "utils/http"
 )
 
 var targetURL = &url.URL{
@@ -66,62 +67,6 @@ func singleJoiningSlash(a, b string) string {
 		return a + "/" + b
 	}
 	return a + b
-}
-
-func RProxy(url_path string) http.HandlerFunc {
-
-	target, _ := url.Parse(url_path)
-
-	return func (w http.ResponseWriter, r *http.Request) {
-
-		o := new(http.Request)
-
-		*o = *r
-
-		// 重设host
-		o.Host = target.Host
-
-		// 重设url
-		o.URL.Scheme = target.Scheme
-		o.URL.Host = target.Host
-		o.URL.Path = target.Path
-		o.URL.RawQuery = r.URL.RawQuery
-
-		// ======================= [COPIED BEGIN 以下代码拷贝而来未改动] ==================
-		o.Proto = "HTTP/1.1"
-		o.ProtoMajor = 1
-		o.ProtoMinor = 1
-		o.Close = false
-
-		transport := http.DefaultTransport
-
-		res, err := transport.RoundTrip(o)
-
-		if err != nil {
-			log.Printf("http: proxy error: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		hdr := w.Header()
-
-		for k, vv := range res.Header {
-			for _, v := range vv {
-				hdr.Add(k, v)
-			}
-		}
-
-		for _, c := range res.Cookies() {
-			w.Header().Add("Set-Cookie", c.Raw)
-		}
-
-		w.WriteHeader(res.StatusCode)
-
-		if res.Body != nil {
-			io.Copy(w, res.Body)
-		}
-		// ======================= [COPIED END] ==================
-	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -177,7 +122,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/test", RProxy("http://localhost:8084/expand_blueprint"))
+	// http.HandleFunc("/test", H.RProxy("http://localhost:8084/expand_blueprint"))
+	http.HandleFunc("/test", H.RProxy("http://www.baidu.com"))
 	log.Println("Start serving on port 1234")
 	http.ListenAndServe(":1234", nil)
 }
