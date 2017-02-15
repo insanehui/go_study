@@ -1,6 +1,7 @@
 // 测试命令：
 // <url:vimscript:!go run % --call=f shit -ca -cb> 演示长选项名的形式，以及重复选项
 // <url:vimscript:!go run % -nf shit> 短选项名
+// TODO: 更详细的用法今后再补充
 
 package main
 
