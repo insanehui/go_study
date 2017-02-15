@@ -53,7 +53,6 @@ import (
 )
 
 var targetURL = &url.URL{
-	Scheme: "http",
 	Host:   "www.baidu.com",
 }
 
@@ -75,6 +74,8 @@ func RProxy(url_path string) http.HandlerFunc {
 
 	return func (w http.ResponseWriter, r *http.Request) {
 
+		log.Printf("raw query: %+v", r.URL.RawQuery)
+
 		o := new(http.Request)
 
 		*o = *r
@@ -82,7 +83,8 @@ func RProxy(url_path string) http.HandlerFunc {
 		o.Host = target.Host
 		o.URL.Scheme = target.Scheme
 		o.URL.Host = target.Host
-		o.URL.Path = singleJoiningSlash(target.Path, o.URL.Path)
+
+		o.URL.Path = singleJoiningSlash(target.Path, o.URL.Path) // 这里作了一些文章
 
 		if q := o.URL.RawQuery; q != "" {
 			o.URL.RawPath = o.URL.Path + "?" + q
@@ -90,7 +92,7 @@ func RProxy(url_path string) http.HandlerFunc {
 			o.URL.RawPath = o.URL.Path
 		}
 
-		o.URL.RawQuery = target.RawQuery
+		o.URL.RawQuery = r.URL.RawQuery
 
 		o.Proto = "HTTP/1.1"
 		o.ProtoMajor = 1
